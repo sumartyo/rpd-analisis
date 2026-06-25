@@ -5,6 +5,8 @@ from datetime import datetime
 import plotly.graph_objects as go
 import plotly.express as px
 from io import BytesIO
+import base64
+from PIL import Image
 
 # === KONFIGURASI ===
 st.set_page_config(
@@ -194,6 +196,11 @@ st.markdown("""
     .stProgress > div > div > div > div {
         display: none !important;
     }
+    .logo-container {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -204,8 +211,21 @@ st.markdown("---")
 status_relaksasi_bulan = {}
 
 with st.sidebar:
+    # === LOGO ===
+    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+    try:
+        # Coba load logo dari file
+        logo = Image.open('FA_Logo_Kementrian_Imigrasi_dan_Pemasyarakatan (1).png')
+        st.image(logo, width=150)
+    except:
+        # Jika file tidak ditemukan, tampilkan teks
+        st.markdown("### 🏛️ KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     st.markdown("### 🏢 Informasi Satker")
-    st.markdown("Kanwil Ditjenpas Bangka Belitung")
+    st.markdown(f"**Kode Satker:** {st.session_state.info_satker['kode']}")
+    st.markdown(f"**Nama Satker:** {st.session_state.info_satker['nama']}")
+    st.markdown(f"**KPPN:** {st.session_state.info_satker['kppn']}")
     st.markdown("**Periode:** 2026")
     st.markdown("---")
     
@@ -373,6 +393,9 @@ dev_seluruh_terakhir = 0
 rata_rata_kumulatif_terakhir = 0
 nilai_ikpa_terakhir = 0
 
+# Simpan data deviasi rata-rata kumulatif untuk grafik
+deviasi_rata_rata_kumulatif = []
+
 for idx, m in enumerate(months):
     r51 = st.session_state.data['rencana']['51'][m]
     s51 = st.session_state.data['penyerapan']['51'][m]
@@ -403,6 +426,9 @@ for idx, m in enumerate(months):
     
     kumulatif_dev_seluruh += dev_seluruh
     rata_rata_kumulatif = kumulatif_dev_seluruh / (idx + 1)
+    
+    # Simpan untuk grafik
+    deviasi_rata_rata_kumulatif.append(rata_rata_kumulatif * 100)
     
     if rata_rata_kumulatif <= 0.05:
         nilai_ikpa = 1.0
@@ -554,37 +580,7 @@ with col3:
 
 st.markdown("---")
 
-# === RINGKASAN TOTAL KESELURUHAN ===
-st.markdown("#### 📌 Ringkasan Total Keseluruhan")
-
-# Definisikan variabel untuk total keseluruhan
-total_rencana_all = total_rencana_51_akum + total_rencana_52_akum + total_rencana_53_akum
-total_penyerapan_all = total_penyerapan_51_akum + total_penyerapan_52_akum + total_penyerapan_53_akum
-target_all = target_51_akum + target_52_akum + target_53_akum
-selisih_all = total_penyerapan_all - target_all
-
-col1, col2, col3, col4, col5 = st.columns(5)
-
-with col1:
-    st.metric("Total Rencana", format_rp(total_rencana_all))
-with col2:
-    st.metric("Total Penyerapan", format_rp(total_penyerapan_all))
-with col3:
-    st.metric("Total Target", format_rp(target_all))
-with col4:
-    st.metric("Total Selisih", format_rp(selisih_all))
-with col5:
-    if target_all > 0:
-        capaian_total = (total_penyerapan_all / target_all) * 100
-        if capaian_total >= 100:
-            st.markdown(f'<p style="color: #28a745; font-size: 1.5rem; font-weight: bold;">{capaian_total:.1f}% ✅</p>', unsafe_allow_html=True)
-        else:
-            st.markdown(f'<p style="color: #dc3545; font-size: 1.5rem; font-weight: bold;">{capaian_total:.1f}% ❌</p>', unsafe_allow_html=True)
-    else:
-        st.markdown('<p style="color: #dc3545; font-size: 1.5rem; font-weight: bold;">0%</p>', unsafe_allow_html=True)
-
 # === TARGET PER TRIWULAN ===
-st.markdown("---")
 st.markdown("#### 📋 Target Penyerapan per Triwulan (Akumulasi)")
 
 triwulan_data = {'I': {}, 'II': {}, 'III': {}, 'IV': {}}
@@ -688,93 +684,33 @@ for tw in ['I', 'II', 'III', 'IV']:
             else:
                 st.markdown(f'<p style="color: #dc3545; font-weight: bold;">Total Capaian Triwulan {tw}: {capaian_tw:.1f}% ❌</p>', unsafe_allow_html=True)
 
-# === REKAP TOTAL SEMUA TRIWULAN ===
-st.markdown("---")
-st.markdown("### 📊 Rekap Total Semua Triwulan (Akumulasi)")
-
-rekap_data = []
-for tw in ['I', 'II', 'III', 'IV']:
-    for akun in ['51', '52', '53']:
-        rekap_data.append({
-            'Triwulan': tw,
-            'Jenis Belanja': f"{akun}",
-            'Rencana': triwulan_data[tw]['rencana'][akun],
-            'Penyerapan': triwulan_data[tw]['penyerapan'][akun],
-            'Target': triwulan_data[tw]['target'][akun],
-            'Selisih': triwulan_data[tw]['penyerapan'][akun] - triwulan_data[tw]['target'][akun],
-            'Capaian (%)': (triwulan_data[tw]['penyerapan'][akun] / triwulan_data[tw]['target'][akun] * 100) if triwulan_data[tw]['target'][akun] > 0 else 0
-        })
-
-df_rekap = pd.DataFrame(rekap_data)
-
-pivot_rencana = df_rekap.pivot(index='Triwulan', columns='Jenis Belanja', values='Rencana')
-pivot_penyerapan = df_rekap.pivot(index='Triwulan', columns='Jenis Belanja', values='Penyerapan')
-pivot_target = df_rekap.pivot(index='Triwulan', columns='Jenis Belanja', values='Target')
-pivot_capaian = df_rekap.pivot(index='Triwulan', columns='Jenis Belanja', values='Capaian (%)')
-
-col1, col2 = st.columns(2)
-
-with col1:
-    st.subheader("Akumulasi Rencana per Triwulan")
-    st.dataframe(pivot_rencana.style.format(lambda x: format_rp(x)), use_container_width=True)
-    
-    st.subheader("Akumulasi Penyerapan per Triwulan")
-    st.dataframe(pivot_penyerapan.style.format(lambda x: format_rp(x)), use_container_width=True)
-
-with col2:
-    st.subheader("Target per Triwulan")
-    st.dataframe(pivot_target.style.format(lambda x: format_rp(x)), use_container_width=True)
-    
-    st.subheader("Capaian per Triwulan (%)")
-    # Tampilkan capaian dengan warna menggunakan HTML
-    capaian_display = pivot_capaian.copy()
-    for col in capaian_display.columns:
-        capaian_display[col] = capaian_display[col].apply(
-            lambda x: f'<span style="color: #dc3545; font-weight: bold;">{x:.1f}%</span>' if x < 100 else f'<span style="color: #28a745; font-weight: bold;">{x:.1f}%</span>'
-        )
-    st.write(capaian_display.to_html(escape=False), unsafe_allow_html=True)
-
 # === GRAFIK ===
 st.markdown("---")
-st.markdown("### 📈 Visualisasi Data")
+st.markdown("### 📈 Visualisasi Deviasi Rata-Rata Kumulatif per Bulan")
 
-col1, col2 = st.columns(2)
+# Buat grafik deviasi rata-rata kumulatif
+fig_deviasi = go.Figure()
 
-with col1:
-    fig_bar = go.Figure()
-    fig_bar.add_trace(go.Bar(
-        x=df_simulasi['Bulan'], 
-        y=df_simulasi['Dev Seluruh (P)'] * 100,
-        name='Deviasi Seluruh (%)',
-        marker_color='#ff7f0e',
-        text=[f"{x*100:.2f}%" for x in df_simulasi['Dev Seluruh (P)']],
-        textposition='auto'
-    ))
-    fig_bar.update_layout(
-        title='Deviasi Seluruh Belanja per Bulan (%)',
-        height=400,
-        yaxis_title='Deviasi (%)'
-    )
-    st.plotly_chart(fig_bar, use_container_width=True)
+fig_deviasi.add_trace(go.Scatter(
+    x=months,
+    y=deviasi_rata_rata_kumulatif,
+    name='Deviasi Rata-rata Kumulatif (%)',
+    mode='lines+markers',
+    line=dict(width=3, color='#ff7f0e'),
+    marker=dict(size=10)
+))
 
-with col2:
-    fig_line = go.Figure()
-    fig_line.add_trace(go.Scatter(
-        x=df_simulasi['Bulan'], 
-        y=df_simulasi['Nilai IKPA'],
-        name='Nilai IKPA',
-        mode='lines+markers',
-        line=dict(width=3, color='#1f77b4'),
-        marker=dict(size=10)
-    ))
-    fig_line.add_hline(y=95, line_dash="dash", line_color="green", annotation_text="Threshold 95")
-    fig_line.update_layout(
-        title='Nilai IKPA per Bulan',
-        height=400,
-        yaxis_title='Nilai IKPA',
-        yaxis_range=[0, 105]
-    )
-    st.plotly_chart(fig_line, use_container_width=True)
+# Tambahkan garis threshold 5%
+fig_deviasi.add_hline(y=5, line_dash="dash", line_color="red", annotation_text="Threshold 5%")
+
+fig_deviasi.update_layout(
+    title='Deviasi Rata-rata Kumulatif per Bulan (%)',
+    height=400,
+    yaxis_title='Deviasi (%)',
+    xaxis_title='Bulan'
+)
+
+st.plotly_chart(fig_deviasi, use_container_width=True)
 
 # === DOWNLOAD ===
 st.markdown("---")
@@ -811,9 +747,22 @@ with col2:
             df_monthly = pd.DataFrame(monthly_data)
             df_monthly.to_excel(writer, sheet_name='Data Bulanan', index=False)
             
+            # Data per triwulan
+            rekap_data = []
+            for tw in ['I', 'II', 'III', 'IV']:
+                for akun in ['51', '52', '53']:
+                    rekap_data.append({
+                        'Triwulan': tw,
+                        'Jenis Belanja': f"{akun}",
+                        'Rencana': triwulan_data[tw]['rencana'][akun],
+                        'Penyerapan': triwulan_data[tw]['penyerapan'][akun],
+                        'Target': triwulan_data[tw]['target'][akun],
+                        'Selisih': triwulan_data[tw]['penyerapan'][akun] - triwulan_data[tw]['target'][akun],
+                        'Capaian (%)': (triwulan_data[tw]['penyerapan'][akun] / triwulan_data[tw]['target'][akun] * 100) if triwulan_data[tw]['target'][akun] > 0 else 0
+                    })
+            df_rekap = pd.DataFrame(rekap_data)
             df_rekap.to_excel(writer, sheet_name='Rekap Triwulan', index=False)
             
-            # Gunakan variabel yang sudah didefinisikan
             summary = pd.DataFrame({
                 'Metrik': [
                     'Periode Analisis',
@@ -831,9 +780,11 @@ with col2:
                     total_rencana_51_akum, total_penyerapan_51_akum, target_51_akum,
                     total_rencana_52_akum, total_penyerapan_52_akum, target_52_akum,
                     total_rencana_53_akum, total_penyerapan_53_akum, target_53_akum,
-                    total_rencana_all, total_penyerapan_all, target_all,
-                    selisih_all,
-                    f"{(total_penyerapan_all/target_all*100) if target_all > 0 else 0:.1f}%",
+                    total_rencana_51_akum + total_rencana_52_akum + total_rencana_53_akum,
+                    total_penyerapan_51_akum + total_penyerapan_52_akum + total_penyerapan_53_akum,
+                    target_51_akum + target_52_akum + target_53_akum,
+                    (total_penyerapan_51_akum + total_penyerapan_52_akum + total_penyerapan_53_akum) - (target_51_akum + target_52_akum + target_53_akum),
+                    f"{((total_penyerapan_51_akum + total_penyerapan_52_akum + total_penyerapan_53_akum) / (target_51_akum + target_52_akum + target_53_akum) * 100) if (target_51_akum + target_52_akum + target_53_akum) > 0 else 0:.1f}%",
                     f"{dev_seluruh_terakhir * 100:.2f}%",
                     f"{rata_rata_kumulatif_terakhir * 100:.2f}%",
                     f"{nilai_ikpa_terakhir * 100:.2f}"
