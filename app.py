@@ -151,9 +151,7 @@ st.markdown("---")
 status_relaksasi_bulan = {}
 
 with st.sidebar:
-    st.markdown("### 🏢 Informasi Satker")
-    st.markdown("**Kode Satker:** 692669")
-    st.markdown("**Nama Satker:** KANWIL DITJEN PEMASYARAKATAN BANGKA BELITUNG")
+    st.markdown("KANWIL DITJEN PEMASYARAKATAN BANGKA BELITUNG")
     st.markdown("**KPPN:** 015")
     st.markdown("**Periode:** 2026")
     st.markdown("---")
