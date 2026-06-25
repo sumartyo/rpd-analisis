@@ -151,7 +151,6 @@ st.markdown("---")
 status_relaksasi_bulan = {}
 
 with st.sidebar:
-    st.markdown("### 🏢 Informasi Satker")
     st.markdown("KANWIL DITJEN PEMASYARAKATAN BANGKA BELITUNG")
     st.markdown("**KPPN:** 015")
     st.markdown("**Periode:** 2026")
@@ -669,7 +668,7 @@ with col2:
     st.subheader("Capaian per Triwulan")
     st.dataframe(
         pivot_capaian.style.format('{:.1f}%')
-        .applymap(lambda x: 'color: #dc3545; font-weight: bold;' if x < 100 else 'color: #28a745; font-weight: bold;')
+        .map(lambda x: 'color: #dc3545; font-weight: bold;' if x < 100 else 'color: #28a745; font-weight: bold;')
     ),
     use_container_width=True
 
