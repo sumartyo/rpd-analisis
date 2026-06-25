@@ -20,13 +20,13 @@ months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 
 default_excel_data = {
     'rencana': {
         '51': {
-            'Jan': 525859698, 'Feb': 578254746, 'Mar': 1085986124,
-            'Apr': 563128746, 'Mei': 607667173, 'Jun': 1177149901,
+            'Jan': 0, 'Feb': 0, 'Mar': 0,
+            'Apr': 0, 'Mei': 0, 'Jun': 0,
             'Jul': 0, 'Agu': 0, 'Sep': 0, 'Okt': 0, 'Nov': 0, 'Des': 0
         },
         '52': {
-            'Jan': 270899999, 'Feb': 256999997, 'Mar': 90000000,
-            'Apr': 237110337, 'Mei': 274897332, 'Jun': 139383437,
+            'Jan': 0, 'Feb': 0, 'Mar': 0,
+            'Apr': 0, 'Mei': 0, 'Jun': 0,
             'Jul': 0, 'Agu': 0, 'Sep': 0, 'Okt': 0, 'Nov': 0, 'Des': 0
         },
         '53': {
@@ -37,13 +37,13 @@ default_excel_data = {
     },
     'penyerapan': {
         '51': {
-            'Jan': 525859698, 'Feb': 566329084, 'Mar': 1138767257,
-            'Apr': 563128746, 'Mei': 608391335, 'Jun': 908723396,
+            'Jan': 0, 'Feb': 0, 'Mar': 0,
+            'Apr': 0, 'Mei': 0, 'Jun': 0,
             'Jul': 0, 'Agu': 0, 'Sep': 0, 'Okt': 0, 'Nov': 0, 'Des': 0
         },
         '52': {
-            'Jan': 270900000, 'Feb': 256745788, 'Mar': 6983892,
-            'Apr': 237110337, 'Mei': 274357200, 'Jun': 112084549,
+            'Jan': 0, 'Feb': 0, 'Mar': 0,
+            'Apr': 0, 'Mei': 0, 'Jun': 0,
             'Jul': 0, 'Agu': 0, 'Sep': 0, 'Okt': 0, 'Nov': 0, 'Des': 0
         },
         '53': {
@@ -52,7 +52,7 @@ default_excel_data = {
             'Jul': 0, 'Agu': 0, 'Sep': 0, 'Okt': 0, 'Nov': 0, 'Des': 0
         }
     },
-    'pagu': {'51': 7460964000, '52': 2787775000, '53': 0}
+    'pagu': {'51': 0, '52': 0, '53': 0}
 }
 
 if 'data' not in st.session_state:
