@@ -219,13 +219,10 @@ with st.sidebar:
         st.image(logo, width=150)
     except:
         # Jika file tidak ditemukan, tampilkan teks
-        st.markdown("### 🏛️ KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN")
+        st.markdown("KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN")
+        st.markdown("KANWIL DITJENPAS BABEL")
     st.markdown('</div>', unsafe_allow_html=True)
     
-    st.markdown("### 🏢 Informasi Satker")
-    st.markdown(f"**Kode Satker:** {st.session_state.info_satker['kode']}")
-    st.markdown(f"**Nama Satker:** {st.session_state.info_satker['nama']}")
-    st.markdown(f"**KPPN:** {st.session_state.info_satker['kppn']}")
     st.markdown("**Periode:** 2026")
     st.markdown("---")
     
