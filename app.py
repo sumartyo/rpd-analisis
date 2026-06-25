@@ -16,41 +16,17 @@ st.set_page_config(
 # === INISIALISASI SESSION STATE ===
 months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 
-# Data default dari Excel (HANYA 51, 52, 53)
+# Data default (kosong)
 default_excel_data = {
     'rencana': {
-        '51': {
-            'Jan': 0, 'Feb': 0, 'Mar': 0,
-            'Apr': 0, 'Mei': 0, 'Jun': 0,
-            'Jul': 0, 'Agu': 0, 'Sep': 0, 'Okt': 0, 'Nov': 0, 'Des': 0
-        },
-        '52': {
-            'Jan': 0, 'Feb': 0, 'Mar': 0,
-            'Apr': 0, 'Mei': 0, 'Jun': 0,
-            'Jul': 0, 'Agu': 0, 'Sep': 0, 'Okt': 0, 'Nov': 0, 'Des': 0
-        },
-        '53': {
-            'Jan': 0, 'Feb': 0, 'Mar': 0,
-            'Apr': 0, 'Mei': 0, 'Jun': 0,
-            'Jul': 0, 'Agu': 0, 'Sep': 0, 'Okt': 0, 'Nov': 0, 'Des': 0
-        }
+        '51': {month: 0 for month in months},
+        '52': {month: 0 for month in months},
+        '53': {month: 0 for month in months}
     },
     'penyerapan': {
-        '51': {
-            'Jan': 0, 'Feb': 0, 'Mar': 0,
-            'Apr': 0, 'Mei': 0, 'Jun': 0,
-            'Jul': 0, 'Agu': 0, 'Sep': 0, 'Okt': 0, 'Nov': 0, 'Des': 0
-        },
-        '52': {
-            'Jan': 0, 'Feb': 0, 'Mar': 0,
-            'Apr': 0, 'Mei': 0, 'Jun': 0,
-            'Jul': 0, 'Agu': 0, 'Sep': 0, 'Okt': 0, 'Nov': 0, 'Des': 0
-        },
-        '53': {
-            'Jan': 0, 'Feb': 0, 'Mar': 0,
-            'Apr': 0, 'Mei': 0, 'Jun': 0,
-            'Jul': 0, 'Agu': 0, 'Sep': 0, 'Okt': 0, 'Nov': 0, 'Des': 0
-        }
+        '51': {month: 0 for month in months},
+        '52': {month: 0 for month in months},
+        '53': {month: 0 for month in months}
     },
     'pagu': {'51': 0, '52': 0, '53': 0}
 }
@@ -73,6 +49,13 @@ if 'data' not in st.session_state:
 if 'excel_uploaded' not in st.session_state:
     st.session_state.excel_uploaded = False
 
+if 'info_satker' not in st.session_state:
+    st.session_state.info_satker = {
+        'kode': '-',
+        'nama': '-',
+        'kppn': '-'
+    }
+
 # === FUNGSI UTILITAS ===
 def format_rp(value):
     return f"Rp {value:,.0f}".replace(",", ".")
@@ -80,43 +63,112 @@ def format_rp(value):
 def parse_excel_file(uploaded_file):
     """Parse file Excel dan ekstrak data rencana & penyerapan (HANYA 51, 52, 53)"""
     try:
+        # Baca file dengan header=2 (baris ke-3 sebagai header)
         df = pd.read_excel(uploaded_file, sheet_name='Data', header=2)
         
+        # Cari baris data dimulai dari angka 1
         data_start = 0
         for idx, row in df.iterrows():
             if str(row.iloc[0]).strip() == '1':
                 data_start = idx
                 break
         
+        # Ambil data setelah baris data_start
         data_df = df.iloc[data_start:].reset_index(drop=True)
-        data_df = data_df[data_df.iloc[:, 1] == 692669]
         
-        rencana_data = {'51': {}, '52': {}, '53': {}}
-        penyerapan_data = {'51': {}, '52': {}, '53': {}}
+        # === TIDAK ADA FILTER SATKER ===
+        # Ambil semua data tanpa filter
+        
+        rencana_data = {
+            '51': {m: 0 for m in months},
+            '52': {m: 0 for m in months},
+            '53': {m: 0 for m in months}
+        }
+        
+        penyerapan_data = {
+            '51': {m: 0 for m in months},
+            '52': {m: 0 for m in months},
+            '53': {m: 0 for m in months}
+        }
         
         month_map = {
             1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'Mei', 6: 'Jun',
             7: 'Jul', 8: 'Agu', 9: 'Sep', 10: 'Okt', 11: 'Nov', 12: 'Des'
         }
         
-        for _, row in data_df.iterrows():
-            periode = int(row.iloc[4])
-            bulan = month_map.get(periode, '')
-            
-            if bulan:
-                rencana_data['51'][bulan] = int(row.iloc[5]) if pd.notna(row.iloc[5]) else 0
-                rencana_data['52'][bulan] = int(row.iloc[6]) if pd.notna(row.iloc[6]) else 0
-                rencana_data['53'][bulan] = int(row.iloc[7]) if pd.notna(row.iloc[7]) else 0
-                
-                penyerapan_data['51'][bulan] = int(row.iloc[9]) if pd.notna(row.iloc[9]) else 0
-                penyerapan_data['52'][bulan] = int(row.iloc[10]) if pd.notna(row.iloc[10]) else 0
-                penyerapan_data['53'][bulan] = int(row.iloc[11]) if pd.notna(row.iloc[11]) else 0
+        # Ambil info satker dari baris pertama (jika ada)
+        info_satker = {
+            'kode': '-',
+            'nama': '-',
+            'kppn': '-'
+        }
         
-        return rencana_data, penyerapan_data
+        if not data_df.empty:
+            try:
+                if pd.notna(data_df.iloc[0, 1]):
+                    info_satker['kode'] = str(data_df.iloc[0, 1]).strip()
+                if pd.notna(data_df.iloc[0, 2]):
+                    info_satker['nama'] = str(data_df.iloc[0, 2]).strip()
+                if pd.notna(data_df.iloc[0, 3]):
+                    info_satker['kppn'] = str(data_df.iloc[0, 3]).strip()
+            except:
+                pass
+        
+        # Ambil data per baris - SEMUA BARIS TANPA FILTER
+        data_loaded = 0
+        for _, row in data_df.iterrows():
+            try:
+                periode_val = row.iloc[4]
+                if pd.isna(periode_val):
+                    continue
+                
+                if isinstance(periode_val, str):
+                    periode = int(periode_val.strip())
+                else:
+                    periode = int(periode_val)
+                
+                bulan = month_map.get(periode, '')
+                
+                if bulan:
+                    # Rencana (kolom 5,6,7) - HANYA 51, 52, 53
+                    rencana_data['51'][bulan] = int(row.iloc[5]) if pd.notna(row.iloc[5]) else 0
+                    rencana_data['52'][bulan] = int(row.iloc[6]) if pd.notna(row.iloc[6]) else 0
+                    rencana_data['53'][bulan] = int(row.iloc[7]) if pd.notna(row.iloc[7]) else 0
+                    
+                    # Penyerapan (kolom 9,10,11) - HANYA 51, 52, 53
+                    penyerapan_data['51'][bulan] = int(row.iloc[9]) if pd.notna(row.iloc[9]) else 0
+                    penyerapan_data['52'][bulan] = int(row.iloc[10]) if pd.notna(row.iloc[10]) else 0
+                    penyerapan_data['53'][bulan] = int(row.iloc[11]) if pd.notna(row.iloc[11]) else 0
+                    
+                    data_loaded += 1
+            except Exception as e:
+                continue
+        
+        st.success(f"✅ Berhasil memuat {data_loaded} baris data")
+        
+        # Tampilkan data yang berhasil di-load
+        st.subheader(f"📊 Data yang berhasil di-load (Satker: {info_satker['kode']})")
+        data_preview = []
+        for bulan in months:
+            data_preview.append({
+                'Bulan': bulan,
+                'Rencana 51': rencana_data['51'][bulan],
+                'Rencana 52': rencana_data['52'][bulan],
+                'Rencana 53': rencana_data['53'][bulan],
+                'Penyerapan 51': penyerapan_data['51'][bulan],
+                'Penyerapan 52': penyerapan_data['52'][bulan],
+                'Penyerapan 53': penyerapan_data['53'][bulan],
+            })
+        df_preview = pd.DataFrame(data_preview)
+        st.dataframe(df_preview)
+        
+        return rencana_data, penyerapan_data, info_satker
     
     except Exception as e:
-        st.error(f"Error membaca file Excel: {str(e)}")
-        return None, None
+        st.error(f"❌ Error membaca file Excel: {str(e)}")
+        import traceback
+        st.error(traceback.format_exc())
+        return None, None, None
 
 # === FUNGSI TARGET TRIWULAN ===
 def get_target_triwulan(pagu, triwulan, jenis):
@@ -128,6 +180,18 @@ def get_target_triwulan(pagu, triwulan, jenis):
     }
     persen = target_persen.get(triwulan, {}).get(jenis, 0)
     return pagu * persen
+
+# === FUNGSI MENENTUKAN BULAN BERJALAN ===
+def get_bulan_berjalan():
+    for m in reversed(months):
+        if (st.session_state.data['rencana']['51'][m] > 0 or 
+            st.session_state.data['rencana']['52'][m] > 0 or 
+            st.session_state.data['rencana']['53'][m] > 0 or
+            st.session_state.data['penyerapan']['51'][m] > 0 or 
+            st.session_state.data['penyerapan']['52'][m] > 0 or 
+            st.session_state.data['penyerapan']['53'][m] > 0):
+            return m
+    return 'Des'
 
 # === CSS ===
 st.markdown("""
@@ -151,8 +215,10 @@ st.markdown("---")
 status_relaksasi_bulan = {}
 
 with st.sidebar:
-    st.markdown("KANWIL DITJEN PEMASYARAKATAN BANGKA BELITUNG")
-    st.markdown("**KPPN:** 015")
+    st.markdown("### 🏢 Informasi Satker")
+    st.markdown(f"**Kode Satker:** {st.session_state.info_satker['kode']}")
+    st.markdown(f"**Nama Satker:** {st.session_state.info_satker['nama']}")
+    st.markdown(f"**KPPN:** {st.session_state.info_satker['kppn']}")
     st.markdown("**Periode:** 2026")
     st.markdown("---")
     
@@ -162,16 +228,16 @@ with st.sidebar:
     if uploaded_file is not None:
         if st.button("📥 Proses Upload", use_container_width=True):
             with st.spinner("Memproses data..."):
-                rencana_data, penyerapan_data = parse_excel_file(uploaded_file)
+                rencana_data, penyerapan_data, info_satker = parse_excel_file(uploaded_file)
                 
                 if rencana_data and penyerapan_data:
-                    # === RESET DATA LAMA TERLEBIH DAHULU ===
+                    # Reset data lama
                     for akun in ['51', '52', '53']:
                         for bulan in months:
                             st.session_state.data['rencana'][akun][bulan] = 0
                             st.session_state.data['penyerapan'][akun][bulan] = 0
                     
-                    # === ISI DATA BARU ===
+                    # Isi data baru
                     for akun in ['51', '52', '53']:
                         if akun in rencana_data:
                             for bulan in months:
@@ -181,6 +247,9 @@ with st.sidebar:
                             for bulan in months:
                                 if bulan in penyerapan_data[akun]:
                                     st.session_state.data['penyerapan'][akun][bulan] = penyerapan_data[akun][bulan]
+                    
+                    if info_satker:
+                        st.session_state.info_satker = info_satker
                     
                     st.session_state.excel_uploaded = True
                     st.success("✅ Data berhasil diupload dari Excel!")
@@ -202,6 +271,11 @@ with st.sidebar:
                     '53': default_excel_data['penyerapan']['53'].copy()
                 }
             }
+            st.session_state.info_satker = {
+                'kode': '-',
+                'nama': '-',
+                'kppn': '-'
+            }
             st.session_state.excel_uploaded = False
             st.rerun()
     
@@ -218,6 +292,11 @@ with st.sidebar:
             'rencana': {'51': {month: 0 for month in months}, '52': {month: 0 for month in months}, '53': {month: 0 for month in months}},
             'penyerapan': {'51': {month: 0 for month in months}, '52': {month: 0 for month in months}, '53': {month: 0 for month in months}}
         }
+        st.session_state.info_satker = {
+            'kode': '-',
+            'nama': '-',
+            'kppn': '-'
+        }
         st.session_state.excel_uploaded = False
         st.rerun()
 
@@ -227,7 +306,7 @@ with st.sidebar:
 st.markdown("### 💰 Pagu Utama DIPA")
 
 if st.session_state.excel_uploaded:
-    st.info("📊 **Status:** Menggunakan data dari file Excel yang diupload")
+    st.info(f"📊 **Status:** Menggunakan data dari file Excel yang diupload (Satker: {st.session_state.info_satker['kode']})")
 
 col1, col2, col3 = st.columns(3)
 
@@ -345,7 +424,6 @@ for idx, m in enumerate(months):
     else:
         nilai_ikpa = max(0.0, 1.0 - rata_rata_kumulatif)
     
-    # Simpan nilai terakhir untuk digunakan di luar loop
     dev_seluruh_terakhir = dev_seluruh
     rata_rata_kumulatif_terakhir = rata_rata_kumulatif
     nilai_ikpa_terakhir = nilai_ikpa
@@ -412,14 +490,7 @@ st.markdown("---")
 st.markdown("### 📌 Ringkasan Hasil dan Target Penyerahan")
 
 # Tentukan bulan berjalan
-bulan_berjalan = 'Jun'
-for m in reversed(months):
-    if (st.session_state.data['rencana']['51'][m] > 0 or 
-        st.session_state.data['rencana']['52'][m] > 0 or 
-        st.session_state.data['rencana']['53'][m] > 0):
-        bulan_berjalan = m
-        break
-
+bulan_berjalan = get_bulan_berjalan()
 idx_bulan = months.index(bulan_berjalan) + 1
 
 # Hitung AKUMULASI dari Januari sampai bulan berjalan
@@ -528,11 +599,10 @@ with col5:
     else:
         st.markdown('<p style="color: #dc3545; font-size: 1.5rem; font-weight: bold;">0%</p>', unsafe_allow_html=True)
 
-# === TARGET PER TRIWULAN (DENGAN WARNA MERAH UNTUK CAPAIAN < 100%) ===
+# === TARGET PER TRIWULAN ===
 st.markdown("---")
 st.markdown("#### 📋 Target Penyerapan per Triwulan (Akumulasi)")
 
-# Hitung akumulasi per triwulan
 triwulan_data = {'I': {}, 'II': {}, 'III': {}, 'IV': {}}
 for tw in ['I', 'II', 'III', 'IV']:
     triwulan_data[tw] = {
@@ -555,7 +625,6 @@ for tw in ['I', 'II', 'III', 'IV']:
         target = get_target_triwulan(pagu, tw, akun)
         triwulan_data[tw]['target'][akun] = target
 
-# Tampilkan per triwulan dengan expander dan warna
 for tw in ['I', 'II', 'III', 'IV']:
     bulan_akhir = {'I': 'Mar', 'II': 'Jun', 'III': 'Sep', 'IV': 'Des'}[tw]
     with st.expander(f"Triwulan {tw} (Jan - {bulan_akhir})"):
@@ -758,7 +827,6 @@ with col2:
             
             df_rekap.to_excel(writer, sheet_name='Rekap Triwulan', index=False)
             
-            # Semua variabel sudah didefinisikan di atas
             summary = pd.DataFrame({
                 'Metrik': [
                     'Periode Analisis',
@@ -797,4 +865,4 @@ with col2:
 
 # Footer
 st.markdown("---")
-st.caption(f"© 2026 Aplikasi RPD Kanwil Ditjenpas Babel | Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+st.caption(f"© 2026 Aplikasi RPD Kanwil Ditjenpas Babel | Bulan Berjalan: {bulan_berjalan} | Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
