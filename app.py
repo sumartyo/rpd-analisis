@@ -212,27 +212,37 @@ status_relaksasi_bulan = {}
 
 with st.sidebar:
     # === LOGO ===
-    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+    st.markdown('<div style="text-align: center; margin-bottom: 1rem;">', unsafe_allow_html=True)
+    
     try:
         # Coba load logo dari file
         logo = Image.open('FA_Logo_Kementrian_Imigrasi_dan_Pemasyarakatan (1).png')
         st.image(logo, width=150)
     except:
-   col1, col2 = st.columns([1, 8])
-
-with col1:
-    st.image("logo.png", width=80)
-
-with col2:
-    st.markdown("""
-    <div style="text-align:center; line-height:1.1;">
-        <h4 style="margin:0;">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN</h4>
-        <h4 style="margin:0;">KANWIL DITJENPAS BABEL</h4>
-        <p style="margin:5px 0 0 0;"><b>Periode:</b> 2026</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-st.divider()
+        # Jika logo tidak ditemukan, tampilkan teks
+        col1, col2 = st.columns([1, 8])
+        with col1:
+            st.image("logo.png", width=80)
+        with col2:
+            st.markdown("""
+            <div style="line-height:1.1;">
+                <b>KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN</b><br>
+                <b>KANWIL DITJENPAS BABEL</b><br>
+                Periode: 2026
+            </div>
+            """, unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.divider()
+    
+    st.markdown("### 🏢 Informasi Satker")
+    st.markdown(f"**Kode Satker:** {st.session_state.info_satker['kode']}")
+    st.markdown(f"**Nama Satker:** {st.session_state.info_satker['nama']}")
+    st.markdown(f"**KPPN:** {st.session_state.info_satker['kppn']}")
+    st.markdown("**Periode:** 2026")
+    
+    st.divider()
     
     st.markdown("### 📤 Upload Data Excel")
     uploaded_file = st.file_uploader("Pilih file Excel", type=['xlsx', 'xls'])
