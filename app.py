@@ -63,21 +63,15 @@ def format_rp(value):
 def parse_excel_file(uploaded_file):
     """Parse file Excel dan ekstrak data rencana & penyerapan (HANYA 51, 52, 53)"""
     try:
-        # Baca file dengan header=2 (baris ke-3 sebagai header)
         df = pd.read_excel(uploaded_file, sheet_name='Data', header=2)
         
-        # Cari baris data dimulai dari angka 1
         data_start = 0
         for idx, row in df.iterrows():
             if str(row.iloc[0]).strip() == '1':
                 data_start = idx
                 break
         
-        # Ambil data setelah baris data_start
         data_df = df.iloc[data_start:].reset_index(drop=True)
-        
-        # === TIDAK ADA FILTER SATKER ===
-        # Ambil semua data tanpa filter
         
         rencana_data = {
             '51': {m: 0 for m in months},
@@ -96,7 +90,6 @@ def parse_excel_file(uploaded_file):
             7: 'Jul', 8: 'Agu', 9: 'Sep', 10: 'Okt', 11: 'Nov', 12: 'Des'
         }
         
-        # Ambil info satker dari baris pertama (jika ada)
         info_satker = {
             'kode': '-',
             'nama': '-',
@@ -114,7 +107,6 @@ def parse_excel_file(uploaded_file):
             except:
                 pass
         
-        # Ambil data per baris - SEMUA BARIS TANPA FILTER
         data_loaded = 0
         for _, row in data_df.iterrows():
             try:
@@ -130,12 +122,10 @@ def parse_excel_file(uploaded_file):
                 bulan = month_map.get(periode, '')
                 
                 if bulan:
-                    # Rencana (kolom 5,6,7) - HANYA 51, 52, 53
                     rencana_data['51'][bulan] = int(row.iloc[5]) if pd.notna(row.iloc[5]) else 0
                     rencana_data['52'][bulan] = int(row.iloc[6]) if pd.notna(row.iloc[6]) else 0
                     rencana_data['53'][bulan] = int(row.iloc[7]) if pd.notna(row.iloc[7]) else 0
                     
-                    # Penyerapan (kolom 9,10,11) - HANYA 51, 52, 53
                     penyerapan_data['51'][bulan] = int(row.iloc[9]) if pd.notna(row.iloc[9]) else 0
                     penyerapan_data['52'][bulan] = int(row.iloc[10]) if pd.notna(row.iloc[10]) else 0
                     penyerapan_data['53'][bulan] = int(row.iloc[11]) if pd.notna(row.iloc[11]) else 0
@@ -146,7 +136,6 @@ def parse_excel_file(uploaded_file):
         
         st.success(f"✅ Berhasil memuat {data_loaded} baris data")
         
-        # Tampilkan data yang berhasil di-load
         st.subheader(f"📊 Data yang berhasil di-load (Satker: {info_satker['kode']})")
         data_preview = []
         for bulan in months:
@@ -216,9 +205,7 @@ status_relaksasi_bulan = {}
 
 with st.sidebar:
     st.markdown("### 🏢 Informasi Satker")
-    st.markdown(f"**Kode Satker:** {st.session_state.info_satker['kode']}")
-    st.markdown(f"**Nama Satker:** {st.session_state.info_satker['nama']}")
-    st.markdown(f"**KPPN:** {st.session_state.info_satker['kppn']}")
+    st.markdown("Kanwil Ditjenpas Bangka Belitung")
     st.markdown("**Periode:** 2026")
     st.markdown("---")
     
@@ -231,13 +218,11 @@ with st.sidebar:
                 rencana_data, penyerapan_data, info_satker = parse_excel_file(uploaded_file)
                 
                 if rencana_data and penyerapan_data:
-                    # Reset data lama
                     for akun in ['51', '52', '53']:
                         for bulan in months:
                             st.session_state.data['rencana'][akun][bulan] = 0
                             st.session_state.data['penyerapan'][akun][bulan] = 0
                     
-                    # Isi data baru
                     for akun in ['51', '52', '53']:
                         if akun in rencana_data:
                             for bulan in months:
@@ -489,11 +474,9 @@ st.dataframe(
 st.markdown("---")
 st.markdown("### 📌 Ringkasan Hasil dan Target Penyerahan")
 
-# Tentukan bulan berjalan
 bulan_berjalan = get_bulan_berjalan()
 idx_bulan = months.index(bulan_berjalan) + 1
 
-# Hitung AKUMULASI dari Januari sampai bulan berjalan
 total_rencana_51_akum = sum([st.session_state.data['rencana']['51'][m] for m in months[:idx_bulan]])
 total_rencana_52_akum = sum([st.session_state.data['rencana']['52'][m] for m in months[:idx_bulan]])
 total_rencana_53_akum = sum([st.session_state.data['rencana']['53'][m] for m in months[:idx_bulan]])
@@ -570,6 +553,34 @@ with col3:
         st.markdown('<p style="color: #dc3545; font-weight: bold;">Capaian: 0%</p>', unsafe_allow_html=True)
 
 st.markdown("---")
+
+# === RINGKASAN TOTAL KESELURUHAN ===
+st.markdown("#### 📌 Ringkasan Total Keseluruhan")
+
+total_rencana_all = total_rencana_51_akum + total_rencana_52_akum + total_rencana_53_akum
+total_penyerapan_all = total_penyerapan_51_akum + total_penyerapan_52_akum + total_penyerapan_53_akum
+target_all = target_51_akum + target_52_akum + target_53_akum
+selisih_all = total_penyerapan_all - target_all
+
+col1, col2, col3, col4, col5 = st.columns(5)
+
+with col1:
+    st.metric("Total Rencana", format_rp(total_rencana_all))
+with col2:
+    st.metric("Total Penyerapan", format_rp(total_penyerapan_all))
+with col3:
+    st.metric("Total Target", format_rp(target_all))
+with col4:
+    st.metric("Total Selisih", format_rp(selisih_all))
+with col5:
+    if target_all > 0:
+        capaian_total = (total_penyerapan_all / target_all) * 100
+        if capaian_total >= 100:
+            st.markdown(f'<p style="color: #28a745; font-size: 1.5rem; font-weight: bold;">{capaian_total:.1f}% ✅</p>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<p style="color: #dc3545; font-size: 1.5rem; font-weight: bold;">{capaian_total:.1f}% ❌</p>', unsafe_allow_html=True)
+    else:
+        st.markdown('<p style="color: #dc3545; font-size: 1.5rem; font-weight: bold;">0%</p>', unsafe_allow_html=True)
 
 # === TARGET PER TRIWULAN ===
 st.markdown("---")
@@ -714,11 +725,10 @@ with col2:
     st.dataframe(pivot_target.style.format(lambda x: format_rp(x)), use_container_width=True)
     
     st.subheader("Capaian per Triwulan")
-    st.dataframe(
-        pivot_capaian.style.format('{:.1f}%')
-        .map(lambda x: 'color: #dc3545; font-weight: bold;' if x < 100 else 'color: #28a745; font-weight: bold;')
-    ),
-    use_container_width=True
+    # Perbaikan: menggunakan applymap dengan benar
+    styled_capaian = pivot_capaian.style.format('{:.1f}%')
+    styled_capaian = styled_capaian.applymap(lambda x: 'color: #dc3545; font-weight: bold;' if x < 100 else 'color: #28a745; font-weight: bold;')
+    st.dataframe(styled_capaian, use_container_width=True)
 
 # === GRAFIK ===
 st.markdown("---")
