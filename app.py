@@ -151,7 +151,9 @@ st.markdown("---")
 status_relaksasi_bulan = {}
 
 with st.sidebar:
-    st.markdown("KANWIL DITJEN PEMASYARAKATAN BANGKA BELITUNG")
+    st.markdown("### 🏢 Informasi Satker")
+    st.markdown("**Kode Satker:** 692669")
+    st.markdown("**Nama Satker:** KANWIL DITJEN PEMASYARAKATAN BANGKA BELITUNG")
     st.markdown("**KPPN:** 015")
     st.markdown("**Periode:** 2026")
     st.markdown("---")
@@ -165,6 +167,13 @@ with st.sidebar:
                 rencana_data, penyerapan_data = parse_excel_file(uploaded_file)
                 
                 if rencana_data and penyerapan_data:
+                    # === RESET DATA LAMA TERLEBIH DAHULU ===
+                    for akun in ['51', '52', '53']:
+                        for bulan in months:
+                            st.session_state.data['rencana'][akun][bulan] = 0
+                            st.session_state.data['penyerapan'][akun][bulan] = 0
+                    
+                    # === ISI DATA BARU ===
                     for akun in ['51', '52', '53']:
                         if akun in rencana_data:
                             for bulan in months:
@@ -668,7 +677,7 @@ with col2:
     st.subheader("Capaian per Triwulan")
     st.dataframe(
         pivot_capaian.style.format('{:.1f}%')
-        .map(lambda x: 'color: #dc3545; font-weight: bold;' if x < 100 else 'color: #28a745; font-weight: bold;')
+        .applymap(lambda x: 'color: #dc3545; font-weight: bold;' if x < 100 else 'color: #28a745; font-weight: bold;')
     ),
     use_container_width=True
 
