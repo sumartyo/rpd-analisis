@@ -554,6 +554,35 @@ with col3:
 
 st.markdown("---")
 
+# === RINGKASAN TOTAL KESELURUHAN ===
+st.markdown("#### 📌 Ringkasan Total Keseluruhan")
+
+# Definisikan variabel untuk total keseluruhan
+total_rencana_all = total_rencana_51_akum + total_rencana_52_akum + total_rencana_53_akum
+total_penyerapan_all = total_penyerapan_51_akum + total_penyerapan_52_akum + total_penyerapan_53_akum
+target_all = target_51_akum + target_52_akum + target_53_akum
+selisih_all = total_penyerapan_all - target_all
+
+col1, col2, col3, col4, col5 = st.columns(5)
+
+with col1:
+    st.metric("Total Rencana", format_rp(total_rencana_all))
+with col2:
+    st.metric("Total Penyerapan", format_rp(total_penyerapan_all))
+with col3:
+    st.metric("Total Target", format_rp(target_all))
+with col4:
+    st.metric("Total Selisih", format_rp(selisih_all))
+with col5:
+    if target_all > 0:
+        capaian_total = (total_penyerapan_all / target_all) * 100
+        if capaian_total >= 100:
+            st.markdown(f'<p style="color: #28a745; font-size: 1.5rem; font-weight: bold;">{capaian_total:.1f}% ✅</p>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<p style="color: #dc3545; font-size: 1.5rem; font-weight: bold;">{capaian_total:.1f}% ❌</p>', unsafe_allow_html=True)
+    else:
+        st.markdown('<p style="color: #dc3545; font-size: 1.5rem; font-weight: bold;">0%</p>', unsafe_allow_html=True)
+
 # === TARGET PER TRIWULAN ===
 st.markdown("---")
 st.markdown("#### 📋 Target Penyerapan per Triwulan (Akumulasi)")
@@ -696,11 +725,14 @@ with col2:
     st.subheader("Target per Triwulan")
     st.dataframe(pivot_target.style.format(lambda x: format_rp(x)), use_container_width=True)
     
-    st.subheader("Capaian per Triwulan")
-    # Perbaikan: menggunakan applymap dengan benar
-    styled_capaian = pivot_capaian.style.format('{:.1f}%')
-    styled_capaian = styled_capaian.map(lambda x: 'color: #dc3545; font-weight: bold;' if x < 100 else 'color: #28a745; font-weight: bold;')
-    st.dataframe(styled_capaian, use_container_width=True)
+    st.subheader("Capaian per Triwulan (%)")
+    # Tampilkan capaian dengan warna menggunakan HTML
+    capaian_display = pivot_capaian.copy()
+    for col in capaian_display.columns:
+        capaian_display[col] = capaian_display[col].apply(
+            lambda x: f'<span style="color: #dc3545; font-weight: bold;">{x:.1f}%</span>' if x < 100 else f'<span style="color: #28a745; font-weight: bold;">{x:.1f}%</span>'
+        )
+    st.write(capaian_display.to_html(escape=False), unsafe_allow_html=True)
 
 # === GRAFIK ===
 st.markdown("---")
@@ -781,6 +813,7 @@ with col2:
             
             df_rekap.to_excel(writer, sheet_name='Rekap Triwulan', index=False)
             
+            # Gunakan variabel yang sudah didefinisikan
             summary = pd.DataFrame({
                 'Metrik': [
                     'Periode Analisis',
