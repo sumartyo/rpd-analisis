@@ -218,13 +218,21 @@ with st.sidebar:
         logo = Image.open('FA_Logo_Kementrian_Imigrasi_dan_Pemasyarakatan (1).png')
         st.image(logo, width=150)
     except:
-        # Jika file tidak ditemukan, tampilkan teks
-        st.markdown("KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN")
-        st.markdown("KANWIL DITJENPAS BABEL")
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.markdown("**Periode:** 2026")
-    st.markdown("---")
+   col1, col2 = st.columns([1, 8])
+
+with col1:
+    st.image("logo.png", width=80)
+
+with col2:
+    st.markdown("""
+    <div style="text-align:center; line-height:1.1;">
+        <h4 style="margin:0;">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN</h4>
+        <h4 style="margin:0;">KANWIL DITJENPAS BABEL</h4>
+        <p style="margin:5px 0 0 0;"><b>Periode:</b> 2026</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.divider()
     
     st.markdown("### 📤 Upload Data Excel")
     uploaded_file = st.file_uploader("Pilih file Excel", type=['xlsx', 'xls'])
@@ -800,4 +808,4 @@ with col2:
 
 # Footer
 st.markdown("---")
-st.caption(f"© 2026 Aplikasi RPD Kanwil Ditjenpas Babel | Bulan Berjalan: {bulan_berjalan} | Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+st.caption(f"© 2026 Aplikasi RPD Kanwil Ditjenpas Babel | Versi 1.0.0 | Dibuat oleh Tim Keuangan Kanwil Ditjenpas Babel")
