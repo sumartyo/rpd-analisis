@@ -727,7 +727,7 @@ with col2:
     st.subheader("Capaian per Triwulan")
     # Perbaikan: menggunakan applymap dengan benar
     styled_capaian = pivot_capaian.style.format('{:.1f}%')
-    styled_capaian = styled_capaian.applymap(lambda x: 'color: #dc3545; font-weight: bold;' if x < 100 else 'color: #28a745; font-weight: bold;')
+    styled_capaian = styled_capaian.map(lambda x: 'color: #dc3545; font-weight: bold;' if x < 100 else 'color: #28a745; font-weight: bold;')
     st.dataframe(styled_capaian, use_container_width=True)
 
 # === GRAFIK ===
