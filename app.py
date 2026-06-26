@@ -316,17 +316,20 @@ proporsi_53 = pagu53 / total_pagu if total_pagu > 0 else 0
 
 st.markdown("---")
 
-# 2. TABEL INPUT RENCANA BULANAN (EDITABLE) - HANYA RENCANA
-st.markdown("### 📅 Input Rencana Bulanan")
-st.caption("💡 Klik sel untuk mengedit nilai Rencana. Data dari Excel akan otomatis terisi setelah upload.")
+# 2. TABEL INPUT RENCANA & PENYERAPAN BULANAN (EDITABLE)
+st.markdown("### 📅 Input Rencana & Penyerapan Bulanan")
+st.caption("💡 Klik sel untuk mengedit nilai. Data dari Excel akan otomatis terisi setelah upload.")
 
 edit_data = []
 for m in months:
     edit_data.append({
         'Bulan': m,
         'Rencana 51': st.session_state.data['rencana']['51'][m],
+        'Penyerapan 51': st.session_state.data['penyerapan']['51'][m],
         'Rencana 52': st.session_state.data['rencana']['52'][m],
+        'Penyerapan 52': st.session_state.data['penyerapan']['52'][m],
         'Rencana 53': st.session_state.data['rencana']['53'][m],
+        'Penyerapan 53': st.session_state.data['penyerapan']['53'][m],
     })
 
 df_editor = pd.DataFrame(edit_data)
@@ -338,8 +341,11 @@ df_edited = st.data_editor(
     column_config={
         'Bulan': st.column_config.TextColumn('Bulan', width='small'),
         'Rencana 51': st.column_config.NumberColumn('Rencana 51', format='%d', step=100000),
+        'Penyerapan 51': st.column_config.NumberColumn('Penyerapan 51', format='%d', step=100000),
         'Rencana 52': st.column_config.NumberColumn('Rencana 52', format='%d', step=100000),
+        'Penyerapan 52': st.column_config.NumberColumn('Penyerapan 52', format='%d', step=100000),
         'Rencana 53': st.column_config.NumberColumn('Rencana 53', format='%d', step=100000),
+        'Penyerapan 53': st.column_config.NumberColumn('Penyerapan 53', format='%d', step=100000),
     },
     num_rows="fixed"
 )
@@ -349,8 +355,11 @@ for _, row in df_edited.iterrows():
     bulan = row['Bulan']
     if bulan in months:
         st.session_state.data['rencana']['51'][bulan] = row['Rencana 51']
+        st.session_state.data['penyerapan']['51'][bulan] = row['Penyerapan 51']
         st.session_state.data['rencana']['52'][bulan] = row['Rencana 52']
+        st.session_state.data['penyerapan']['52'][bulan] = row['Penyerapan 52']
         st.session_state.data['rencana']['53'][bulan] = row['Rencana 53']
+        st.session_state.data['penyerapan']['53'][bulan] = row['Penyerapan 53']
 
 st.markdown("---")
 
