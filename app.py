@@ -164,7 +164,7 @@ def get_target_triwulan(pagu, triwulan, jenis):
     target_persen = {
         'I': {'51': 0.10, '52': 0.15, '53': 0.10},
         'II': {'51': 0.40, '52': 0.50, '53': 0.40},
-        'III': {'51': 0.60, '52': 0.65, '53': 0.60},
+        'III': {'51': 0.75, '52': 0.70, '53': 0.70},
         'IV': {'51': 1.00, '52': 1.00, '53': 1.00}
     }
     persen = target_persen.get(triwulan, {}).get(jenis, 0)
