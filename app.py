@@ -197,7 +197,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<h1 class="main-header">📊 Aplikasi Analisis RPD Kanwil Ditjenpas Babel</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header">📊 Aplikasi Analisis RPD dan Penyerapan Kanwil Ditjenpas Babel</h1>', unsafe_allow_html=True)
 st.markdown("---")
 
 # === SIDEBAR ===
